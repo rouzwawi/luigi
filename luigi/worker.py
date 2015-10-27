@@ -174,7 +174,7 @@ class TaskProcess(multiprocessing.Process):
             logger.exception("[pid %s] Worker %s failed    %s", os.getpid(), self.worker_id, self.task)
             self.task.trigger_event(Event.FAILURE, self.task, ex)
             raw_error_message = self.task.on_failure(ex)
-            expl = json.dumps(raw_error_message)
+            expl = json.dumps(unicode(raw_error_message, errors='replace'))
             self._send_error_notification(raw_error_message)
         finally:
             self.result_queue.put(
