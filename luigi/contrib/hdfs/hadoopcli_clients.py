@@ -130,14 +130,20 @@ class HdfsClient(hdfs_abstract_client.HdfsFileSystem):
 
     def count(self, path):
         cmd = load_hadoop_cmd() + ['fs', '-count', path]
+        logger.debug('Running path count check: %s', subprocess.list2cmdline(cmd))
         stdout = self.call_check(cmd)
         lines = stdout.split('\n')
-        for line in stdout.split('\n'):
+        results = {'content_size': 0, 'dir_count': 0, 'file_count': 0}
+        for line in lines:
             if line.startswith("OpenJDK 64-Bit Server VM warning") or line.startswith("It's highly recommended") or not line:
-                lines.pop(lines.index(line))
+                continue
             else:
-                (dir_count, file_count, content_size, ppath) = stdout.split()
-        results = {'content_size': content_size, 'dir_count': dir_count, 'file_count': file_count}
+                (dir_count, file_count, content_size, ppath) = line.split()
+                results['dir_count'] += int(dir_count)
+                results['file_count'] += int(file_count)
+                results['content_size'] += int(content_size)
+
+        logger.debug('Path count check on %s: %s', path, results)
         return results
 
     def copy(self, path, destination):
